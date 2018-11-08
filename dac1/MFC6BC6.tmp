@@ -1,0 +1,328 @@
+/**
+  ******************************************************************************
+  * @file    Project/STM8L15x_StdPeriph_Template/main.c
+  * @author  MCD Application Team
+  * @version V1.6.1
+  * @date    30-September-2014
+  * @brief   Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; COPYRIGHT 2014 STMicroelectronics</center></h2>
+  *
+  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  * You may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at:
+  *
+  *        http://www.st.com/software_license_agreement_liberty_v2
+  *
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  *
+  ******************************************************************************
+  */
+
+/* Includes ------------------------------------------------------------------*/
+#include <stm8l15x.h>
+#include <math.h>
+/** @addtogroup STM8L15x_StdPeriph_Template
+  * @{
+  */
+
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+#define PI 3.1415926535897932384626433832795
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
+
+/* Private functions ---------------------------------------------------------*/
+
+/**
+  * @brief  Main program.
+  * @param  None
+  * @retval None
+  */
+	
+	volatile static double a,b;
+	volatile uint16_t c[200];
+	const uint16_t sin_tab[]=
+{
+	2047,
+2111,
+2175,
+2239,
+2303,
+2367,
+2430,
+2493,
+2556,
+2618,
+2679,
+2740,
+2800,
+2859,
+2918,
+2976,
+3033,
+3089,
+3143,
+3197,
+3250,
+3301,
+3351,
+3400,
+3448,
+3494,
+3539,
+3582,
+3624,
+3664,
+3703,
+3740,
+3775,
+3808,
+3840,
+3870,
+3899,
+3925,
+3950,
+3972,
+3993,
+4012,
+4029,
+4044,
+4057,
+4068,
+4077,
+4084,
+4089,
+4092,
+4094,
+4092,
+4089,
+4084,
+4077,
+4068,
+4057,
+4044,
+4029,
+4012,
+3993,
+3972,
+3950,
+3925,
+3899,
+3870,
+3840,
+3808,
+3775,
+3740,
+3703,
+3664,
+3624,
+3582,
+3539,
+3494,
+3448,
+3400,
+3351,
+3301,
+3250,
+3197,
+3143,
+3089,
+3033,
+2976,
+2918,
+2859,
+2800,
+2740,
+2679,
+2618,
+2556,
+2493,
+2430,
+2367,
+2303,
+2239,
+2175,
+2111,
+2047,
+1982,
+1918,
+1854,
+1790,
+1726,
+1663,
+1600,
+1537,
+1475,
+1414,
+1353,
+1293,
+1234,
+1175,
+1117,
+1060,
+1004,
+950,
+896,
+843,
+792,
+742,
+693,
+645,
+599,
+554,
+511,
+469,
+429,
+390,
+353,
+318,
+285,
+253,
+223,
+194,
+168,
+143,
+121,
+100,
+81,
+64,
+49,
+36,
+25,
+16,
+9,
+4,
+1,
+0,
+1,
+4,
+9,
+16,
+25,
+36,
+49,
+64,
+81,
+100,
+121,
+143,
+168,
+194,
+223,
+253,
+285,
+318,
+353,
+390,
+429,
+469,
+511,
+554,
+599,
+645,
+693,
+742,
+792,
+843,
+896,
+950,
+1004,
+1060,
+1117,
+1175,
+1234,
+1293,
+1353,
+1414,
+1475,
+1537,
+1600,
+1663,
+1726,
+1790,
+1854,
+1918,
+1982
+
+
+};
+
+void main(void)
+{
+	//CLK_SYSCLKSourceSwitchCmd(ENABLE); // разрешаем изменение тактирования
+   //CLK_SYSCLKSourceConfig(CLK_SYSCLKSource_HSI); //Выбор источн. тактирования
+   CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1); // Предделитель
+   //CLK_SYSCLKSourceSwitchCmd(DISABLE); // Запрет изменения ист. тактиров
+   
+	 // настраиваем ножку контроллера на в вывод
+	GPIO_Init(GPIOC, GPIO_Pin_7, GPIO_Mode_Out_PP_High_Slow); 
+  // настроиваем пин РС4 на выход частоты процессора деленного на 64
+	CLK_CCOConfig(CLK_CCOSource_HSI, CLK_CCODiv_64); //
+	
+	//------Настройка таймера-------///
+	//Включаем тактирование таймера
+	CLK_PeripheralClockConfig(CLK_Peripheral_TIM4, ENABLE);
+	// На всякий случай сбрасываем все настройки таймера
+	TIM4_DeInit();
+	// настраивем пределитель таймера на 256 и ограничиваем счет 124
+	TIM4_TimeBaseInit(TIM4_Prescaler_32,
+                       49);
+	//Разрешаем Прервание таймера по переполнению
+	TIM4_ITConfig(TIM4_IT_Update, ENABLE);
+	// Включаем счет
+	TIM4_Cmd(ENABLE);
+	//----------------------------------------------
+	
+	CLK_PeripheralClockConfig(CLK_Peripheral_DAC, ENABLE);
+	DAC_Init(DAC_Channel_1,
+              DAC_Trigger_Software,
+              DAC_OutputBuffer_Enable);
+	DAC_Cmd(DAC_Channel_1, ENABLE);
+	//Включаем глобальное разрешение прерывания
+	b=3;
+	a=sin(PI/b);
+	
+	enableInterrupts();
+		
+	/* Infinite loop */
+  while (1)
+  {
+		b=b+1;
+	}
+	
+}
+
+#ifdef  USE_FULL_ASSERT
+
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *   where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t* file, uint32_t line)
+{ 
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+  /* Infinite loop */
+  while (1)
+  {
+  }
+}
+#endif
+
+/**
+  * @}
+  */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
